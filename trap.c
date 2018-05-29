@@ -47,6 +47,15 @@ trap(struct trapframe *tf)
   }
 
   switch(tf->trapno){
+  case T_PGFLT:
+    cprintf("Page Fault has occurred, will increase stack size \n");
+    while (rcr2() < KERNBASE - myproc()->stack_sz*PGSIZE) {
+     if(allocuvm(myproc()->pgdir, KERNBASE - (myproc()->stack_sz + 1)*PGSIZE, KERNBASE - (myproc()->stack_sz)*PGSIZE - 1) == 0) {
+        freevm(myproc()->pgdir);
+     }
+     myproc()->stack_sz = myproc()->stack_sz + 1;
+    }
+    break;
   case T_IRQ0 + IRQ_TIMER:
     if(cpuid() == 0){
       acquire(&tickslock);
